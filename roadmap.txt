@@ -1,0 +1,205 @@
+🧠 Project Goal (same as before)
+
+Build an In-Memory Database with Indexing (pure Java)
+
+🏗️ Project Structure (NO Maven)
+
+Just create a simple folder:
+
+project/
+ ├── Main.java
+ ├── Row.java
+ ├── Table.java
+ ├── Index.java
+ └── QueryEngine.java
+
+👉 All files in same folder (keep it simple)
+
+🚀 STEP-BY-STEP ROADMAP (Non-Maven)
+STEP 1: Row Class (30–45 mins)
+File: Row.java
+import java.util.Map;
+
+class Row {
+    Map<String, String> data;
+
+    Row(Map<String, String> data) {
+        this.data = data;
+    }
+
+    String get(String column) {
+        return data.get(column);
+    }
+}
+Concept:
+
+Each row = key-value map
+
+🟢 STEP 2: Table Class (1–2 hours)
+File: Table.java
+import java.util.*;
+
+class Table {
+    List<Row> rows = new ArrayList<>();
+
+    void insert(Row row) {
+        rows.add(row);
+    }
+
+    List<Row> getAllRows() {
+        return rows;
+    }
+
+    // Full scan
+    List<Row> scan(String column, String value) {
+        List<Row> result = new ArrayList<>();
+
+        for (Row row : rows) {
+            if (row.get(column).equals(value)) {
+                result.add(row);
+            }
+        }
+
+        return result;
+    }
+}
+Concept:
+
+This simulates table storage + full scan
+
+🟢 STEP 3: Index Class (IMPORTANT) (2–3 hours)
+File: Index.java
+import java.util.*;
+
+class Index {
+    Map<String, List<Row>> indexMap = new HashMap<>();
+
+    void add(String key, Row row) {
+        indexMap.computeIfAbsent(key, k -> new ArrayList<>()).add(row);
+    }
+
+    List<Row> get(String key) {
+        return indexMap.getOrDefault(key, new ArrayList<>());
+    }
+}
+Concept:
+
+Hash-based index → O(1) lookup
+
+🟢 STEP 4: Connect Index to Table (1 hour)
+
+Update Table.java:
+
+Index ageIndex = new Index();
+Modify insert:
+void insert(Row row) {
+    rows.add(row);
+    ageIndex.add(row.get("age"), row);
+}
+Add index search:
+List<Row> indexSearch(String value) {
+    return ageIndex.get(value);
+}
+🟢 STEP 5: Query Engine (1–2 hours)
+File: QueryEngine.java
+import java.util.*;
+
+class QueryEngine {
+
+    Table table;
+
+    QueryEngine(Table table) {
+        this.table = table;
+    }
+
+    List<Row> query(String column, String value, boolean useIndex) {
+        if (useIndex) {
+            return table.indexSearch(value);
+        } else {
+            return table.scan(column, value);
+        }
+    }
+}
+Concept:
+
+Switch between:
+
+Scan
+Index lookup
+🟢 STEP 6: Main File (RUN EVERYTHING)
+File: Main.java
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+
+        Table table = new Table();
+
+        // Insert sample data
+        for (int i = 0; i < 1000; i++) {
+            Map<String, String> data = new HashMap<>();
+            data.put("id", String.valueOf(i));
+            data.put("name", "User" + i);
+            data.put("age", String.valueOf(i % 50));
+            table.insert(new Row(data));
+        }
+
+        QueryEngine engine = new QueryEngine(table);
+
+        // Scan query
+        long start = System.nanoTime();
+        List<Row> result1 = engine.query("age", "30", false);
+        long end = System.nanoTime();
+        System.out.println("Scan time: " + (end - start) + " ns");
+
+        // Index query
+        start = System.nanoTime();
+        List<Row> result2 = engine.query("age", "30", true);
+        end = System.nanoTime();
+        System.out.println("Index time: " + (end - start) + " ns");
+
+        System.out.println("Rows found: " + result2.size());
+    }
+}
+🧪 HOW TO RUN (NO MAVEN)
+Step 1: Go to folder
+cd project
+Step 2: Compile all files
+javac *.java
+Step 3: Run
+java Main
+🎯 Expected Output
+Scan time: 50000 ns
+Index time: 5000 ns
+Rows found: 20
+🧠 What You’ve Built
+
+You now have:
+
+Feature	Real DB Equivalent
+List<Row>	Table storage
+Scan	Full table scan
+HashMap index	Index
+QueryEngine	Query executor
+🔥 What to Understand (IMPORTANT)
+
+Make sure you can explain:
+
+1. Why scan is slow
+
+→ O(n)
+
+2. Why index is fast
+
+→ O(1)
+
+3. Trade-off
+Faster reads
+Slightly slower inserts
+⚠️ Keep it simple
+
+Do NOT:
+
+Add SQL parsing ❌
+Add joins ❌
+Overengineer ❌
